@@ -43,10 +43,14 @@ $deleteanypost = has_capability('local/greetings:deleteanymessage', $context);
 
 $action = optional_param('action', '', PARAM_TEXT);
 
-if ($action == 'del' && $deleteanypost) {
+if ($action == 'del') {
+    require_sesskey();
     $id = required_param('id', PARAM_TEXT);
-
-    $DB->delete_records('local_greetings_messages', array('id' => $id));
+    $record = $DB->get_record('local_greetings_messages', array('id' => $id));
+    if ($record && ($deleteanypost || $record->userid == $USER->id)) {
+        $DB->delete_records('local_greetings_messages', array('id' => $id));
+        redirect($PAGE->url);
+    }
 }
 
 $messageform = new \local_greetings\form\message_form();
@@ -72,6 +76,8 @@ if ($data = $messageform->get_data()) {
         $record->userid = $USER->id;
 
         $DB->insert_record('local_greetings_messages', $record);
+
+        redirect($PAGE->url);
     }
 }
 
@@ -95,12 +101,12 @@ if ($allowview) {
         echo html_writer::start_tag('p', array('class' => 'card-text'));
         echo html_writer::tag('small', userdate($m->timecreated), array('class' => 'text-muted'));
         echo html_writer::end_tag('p');
-        if ($deleteanypost) {
+        if ($deleteanypost || $m->userid == $USER->id) {
             echo html_writer::start_tag('p', array('class' => 'card-footer text-center'));
             echo html_writer::link(
                 new moodle_url(
                     '/local/greetings/index.php',
-                    array('action' => 'del', 'id' => $m->id)
+                    array('action' => 'del', 'id' => $m->id, 'sesskey' => sesskey())
                 ),
                 $OUTPUT->pix_icon('t/delete', '') . get_string('delete')
             );
