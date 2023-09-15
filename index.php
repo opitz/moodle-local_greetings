@@ -37,6 +37,18 @@ $PAGE->set_pagelayout('standard');
 $PAGE->set_title($SITE->fullname);
 $PAGE->set_heading(get_string('pluginname', 'local_greetings'));
 
+$allowpost = has_capability('local/greetings:postmessages', $context);
+$allowview = has_capability('local/greetings:viewmessages', $context);
+$deleteanypost = has_capability('local/greetings:deleteanymessage', $context);
+
+$action = optional_param('action', '', PARAM_TEXT);
+
+if ($action == 'del' && $deleteanypost) {
+    $id = required_param('id', PARAM_TEXT);
+
+    $DB->delete_records('local_greetings_messages', array('id' => $id));
+}
+
 $messageform = new \local_greetings\form\message_form();
 
 echo $OUTPUT->header();
@@ -47,8 +59,9 @@ if (isloggedin()) {
     echo get_string('greetinguser', 'local_greetings');
 }
 
-$messageform->display();
-
+if ($allowpost) {
+    $messageform->display();
+}
 if ($data = $messageform->get_data()) {
     $message = required_param('message', PARAM_TEXT);
 
@@ -70,19 +83,32 @@ $sql = "SELECT m.id, m.message, m.timecreated, m.userid {$userfieldssql->selects
      LEFT JOIN {user} u ON u.id = m.userid
       ORDER BY timecreated DESC";
 
-$messages = $DB->get_records_sql($sql);
+if ($allowview) {
+    $messages = $DB->get_records_sql($sql);
 
-echo $OUTPUT->box_start('card-columns');
-foreach ($messages as $m) {
-    echo html_writer::start_tag('div', array('class' => 'card'));
-    echo html_writer::start_tag('div', array('class' => 'card-body'));
-    echo html_writer::tag('p', format_text($m->message, FORMAT_PLAIN), array('class' => 'card-text'));
-    echo html_writer::tag('p', get_string('postedby', 'local_greetings', $m->firstname), array('class' => 'card-text'));
-    echo html_writer::start_tag('p', array('class' => 'card-text'));
-    echo html_writer::tag('small', userdate($m->timecreated), array('class' => 'text-muted'));
-    echo html_writer::end_tag('p');
-    echo html_writer::end_tag('div');
-    echo html_writer::end_tag('div');
+    echo $OUTPUT->box_start('card-columns');
+    foreach ($messages as $m) {
+        echo html_writer::start_tag('div', array('class' => 'card'));
+        echo html_writer::start_tag('div', array('class' => 'card-body'));
+        echo html_writer::tag('p', format_text($m->message, FORMAT_PLAIN), array('class' => 'card-text'));
+        echo html_writer::tag('p', get_string('postedby', 'local_greetings', $m->firstname), array('class' => 'card-text'));
+        echo html_writer::start_tag('p', array('class' => 'card-text'));
+        echo html_writer::tag('small', userdate($m->timecreated), array('class' => 'text-muted'));
+        echo html_writer::end_tag('p');
+        if ($deleteanypost) {
+            echo html_writer::start_tag('p', array('class' => 'card-footer text-center'));
+            echo html_writer::link(
+                new moodle_url(
+                    '/local/greetings/index.php',
+                    array('action' => 'del', 'id' => $m->id)
+                ),
+                $OUTPUT->pix_icon('t/delete', '') . get_string('delete')
+            );
+            echo html_writer::end_tag('p');
+        }        echo html_writer::end_tag('div');
+        echo html_writer::end_tag('div');
+    }
+    echo $OUTPUT->box_end();
 }
-echo $OUTPUT->box_end();
+
 echo $OUTPUT->footer();
