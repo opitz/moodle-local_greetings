@@ -104,15 +104,29 @@ if ($allowview) {
         echo html_writer::tag('small', userdate($m->timecreated), array('class' => 'text-muted'));
         echo html_writer::end_tag('p');
         if ($deleteanypost || $m->userid == $USER->id) {
+
             echo html_writer::start_tag('p', array('class' => 'card-footer text-center'));
+
+            echo html_writer::link(
+                new moodle_url(
+                    '/local/greetings/edit.php',
+                    array('action' => 'edit', 'id' => $m->id, 'sesskey' => sesskey())
+                ),
+                $OUTPUT->pix_icon('i/edit', get_string('edit')),
+                ['role' => 'button']
+            );
+
             echo html_writer::link(
                 new moodle_url(
                     '/local/greetings/index.php',
                     array('action' => 'del', 'id' => $m->id, 'sesskey' => sesskey())
                 ),
-                $OUTPUT->pix_icon('t/delete', '') . get_string('delete')
+                $OUTPUT->pix_icon('t/delete', get_string('delete')),
+                ['role' => 'button']
             );
+
             echo html_writer::end_tag('p');
+
         }        echo html_writer::end_tag('div');
         echo html_writer::end_tag('div');
     }

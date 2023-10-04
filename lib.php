@@ -35,9 +35,22 @@ function local_greetings_get_greeting($user) {
     }
 
     $country = $user->country;
+
     switch ($country) {
+        case 'AU':
+            $langstr = 'greetinguserau';
+            break;
         case 'ES':
             $langstr = 'greetinguseres';
+            break;
+        case 'FJ':
+            $langstr = 'greetinguserfj';
+            break;
+        case 'NZ':
+            $langstr = 'greetingusernz';
+            break;
+        case 'UK':
+            $langstr = 'greetinguseruk';
             break;
         default:
             $langstr = 'greetingloggedinuser';
@@ -51,6 +64,8 @@ function local_greetings_get_greeting($user) {
  * Insert a link to index.php on the site front page navigation menu.
  *
  * @param navigation_node $frontpage Node representing the front page in the navigation tree.
+ * @return void
+ * @throws coding_exception
  */
 function local_greetings_extend_navigation_frontpage(navigation_node $frontpage) {
     if (!isguestuser() && isloggedin()) {
